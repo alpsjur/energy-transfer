@@ -118,3 +118,12 @@ class InterpolateRegularGrid:
                                   , method=self.method
                                   )
         return Fi
+    
+    def reverse_regrid(self,Fi):
+        # interpolate Fi to old grid grid X Y using scipy
+        F = interpolate.griddata((self.Xi.flatten(), self.Yi.flatten())
+                                  , Fi.flatten()
+                                  , (self.X, self.Y)
+                                  , method=self.method
+                                  )
+        return F

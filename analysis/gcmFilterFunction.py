@@ -115,7 +115,12 @@ def get_grid_vars(dsGrid):
     
     return grid_vars_visc, grid_vars_diff, dx_min
 
-def filter(ds, filter_scale, grid_vars_visc, grid_vars_diff, dx_min, n_iterations):
+def filter(ds, filter_scale, grid_vars_visc, grid_vars_diff, dx_min, n_iterations, kernel='gauss'):
+    
+    if kernel == 'gauss':
+        filter_shape = gcm_filters.FilterShape.GAUSSIAN
+    elif kernel == 'taper':
+        filter_shape = gcm_filters.FilterShape.TAPER
     
     # create filter
     filter_visc = gcm_filters.Filter(
@@ -123,7 +128,7 @@ def filter(ds, filter_scale, grid_vars_visc, grid_vars_diff, dx_min, n_iteration
         #n_steps=50,
         filter_scale=filter_scale,
         dx_min=dx_min,
-        filter_shape=gcm_filters.FilterShape.GAUSSIAN,
+        filter_shape=filter_shape,
         grid_type=gcm_filters.GridType.VECTOR_C_GRID,
         grid_vars=grid_vars_visc
     )
@@ -133,7 +138,7 @@ def filter(ds, filter_scale, grid_vars_visc, grid_vars_diff, dx_min, n_iteration
         #n_steps=50,
         filter_scale=filter_scale,
         dx_min=dx_min,
-        filter_shape=gcm_filters.FilterShape.GAUSSIAN,
+        filter_shape=filter_shape,
         grid_type=gcm_filters.GridType.IRREGULAR_WITH_LAND,
         grid_vars=grid_vars_diff
     )

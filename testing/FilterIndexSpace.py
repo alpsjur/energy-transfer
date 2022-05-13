@@ -162,10 +162,17 @@ class FilterIndexSpace(InterpolateRegularGrid):
             Gaussian window.
 
         '''
-        sigma = l/(np.sqrt(12))
-        winx = signal.windows.gaussian(l*2,sigma)
-        winX, winY = np.meshgrid(winx,winx)
-        win = winX*winY
+        # sigma = l/(np.sqrt(12))
+        # winx = signal.windows.gaussian(l*2,sigma)
+        # winX, winY = np.meshgrid(winx,winx)
+        # win = winX*winY
+        
+        sigma = l/np.sqrt(12)
+        width = l*2#+1
+        width = int(width)
+        
+        win = np.outer(signal.windows.gaussian(width, sigma),
+                  signal.windows.gaussian(width, sigma))
         
         return win
     
