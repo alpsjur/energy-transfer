@@ -14,15 +14,23 @@ import seaborn as sns
 import cartopy.crs as ccrs
 
 datadir = '/projects/NS9869K/LLC2160/gcm_filtered/'
-figdir = 'figures/'
+figdir = '/nird/home/annals/figures_temp/'
 
-idx = 200
-idy_start = 1100
-idy_stop = 1500
+level = 21
+
+idx = 1500
+idy_start = 500
+idy_stop = 1400
 
 sns.set_theme()
 
-files = sorted(glob.glob(datadir+'*'))
+start_day = 0
+stop_day = 778
+step = 5
+days = np.arange(start_day,stop_day,step)
+
+#files = sorted(glob.glob(datadir+'*'))
+files = [datadir+f'LLC2160_filtered_day{day:03n}_k{level:02n}.nc' for day in days]
 print(len(files))
 
 data = xr.open_mfdataset(files, concat_dim='time', combine='nested')
@@ -118,7 +126,7 @@ axd['map'].plot(lon,lat,
 
 # plot regional mean 
 #pimax = float(np.abs(seasonal_pi).max().values)
-pimax = 5e-10
+pimax = 0.5e-9
 
 axd['pi'].pcolormesh(x, scales*1e3, pi_mean.values, 
                       vmin = -pimax,
@@ -129,15 +137,17 @@ axd['pi'].pcolormesh(x, scales*1e3, pi_mean.values,
 
 axd['pi'].set_yscale('log')
 axd['pi'].set_title(f'n={len(files)}')
+axd['pi'].set_ylabel('K [km-1]')
 axd['pi'].invert_yaxis()
 axd['pi'].invert_xaxis()
 axd['pi'].get_xaxis().set_visible(False)
 
 axd['bathymetry'].plot(x,bathc)
 axd['bathymetry'].invert_yaxis()
+axd['bathymetry'].set_ylabel('Bathymetry')
 
 
 
 
-fig.savefig(figdir+'test_transect.png')
+fig.savefig(figdir+'transect2.png')
 

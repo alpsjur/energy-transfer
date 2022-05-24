@@ -25,19 +25,22 @@ levels = [21, 16, 28, 34, 39, 52, 67]
 filetype = 'snapshot'
 
 # sycle through days in a way than ensures a spread
+start_day = 0
 stop_day = 778
-scycle = 36#int(sys.argv[2])
-start_day = 35#int(sys.argv[1])#0
+step = 5
+tot_workers = 4
+worker = 0#int(sys.argv[1])
 
-linear_days = np.arange(start_day,stop_day)
+all_days = np.arange(start_day,stop_day,step)
+days = np.array_split(all_days,tot_workers)[worker]
 
-days = []
+# days = []
 
-start = 0
-while len(days)<stop_day:
-    for d in linear_days[start::scycle]:
-        days.append(d)
-    start += 1
+# start = 0
+# while len(days)<len(linear_days):
+#     for d in linear_days[start::scycle]:
+#         days.append(d)
+#     start += 1
     
 # number of iterations depend on scale
 iterations = []

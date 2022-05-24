@@ -25,13 +25,13 @@ datapath = '/home/alsjur/PhD/Data/test_data/LLC2160/'
 figpath = '/home/alsjur/PhD/Figurer/EnergyTransfer/method/'
 
 scales = np.geomspace(20000,150000,num=10,dtype=int)
-iterations = [15, 25]
+iterations = [15]
 day = 0
 
 
 # load data
-dsU = xr.open_dataset(datapath+'LLC2160_U_Arctic_day_{day:04n}_k021_snapshot.nc').squeeze()
-dsV = xr.open_dataset(datapath+'LLC2160_V_Arctic_day_{day:04n}_k021_snapshot.nc').squeeze()
+dsU = xr.open_dataset(datapath+f'LLC2160_U_Arctic_day_{day:04n}_k021_snapshot.nc').squeeze()
+dsV = xr.open_dataset(datapath+f'LLC2160_V_Arctic_day_{day:04n}_k021_snapshot.nc').squeeze()
 dsGrid = xr.open_dataset(datapath+'LLC2160_grid.nc')#.squeeze()
 
 # select region
@@ -164,8 +164,9 @@ print(f"Runtime scipy {runtime:0.4f} minutes")
 # coarsen_factor = 3
 # intermediate_scale = coarsen_factor*1500
 
-# # filter to intermediate scale
-# dsbar = filter(ds, intermediate_scale, grid_vars_visc, grid_vars_diff, dx_min, n_iterations=1)
+# filter to intermediate scale
+# assume regular grid, so filtered in index space, not physical space
+# #dsbar = filter(ds, intermediate_scale, grid_vars_visc, grid_vars_diff, dx_min, n_iterations=1)
 
 # dsGridc = coarsen_grid(dsGrid, coarsen_factor)
 # dsc = coarsen_data(dsbar, coarsen_factor)
@@ -297,7 +298,7 @@ ax2.plot(ls*1.5,meane_scipy, marker='x', color='black')
 #ax.set_ylim(-1.5e-10,0)
 #ax1.set_xlim(0,300)
 ax1.set_ylim(-2.5e-10,1e-10)
-ax2.set_ylim(0,15e-3)
+ax2.set_ylim(0,1.5e-3)
 
 
 ax1.legend(ncol = 4)

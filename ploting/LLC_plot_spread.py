@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat May  7 16:46:34 2022
+Created on Thu May 19 18:11:56 2022
 
 @author: alsjur
 """
@@ -24,25 +24,22 @@ level = 21
 
 start_day = 0
 stop_day = 778
-step = 5
+step = 50
 days = np.arange(start_day,stop_day,step)
 
-# idx_start = 900
-# idx_stop = 1000
-# idy_start = 900
-# idy_stop = 1000
-idx_start = 1400
-idx_stop = 1500
-idy_start = 700
-idy_stop = 800
+colors = sns.color_palette("viridis", len(days))
+
+idx_start = 900
+idx_stop = 905
+idy_start = 1000
+idy_stop = 1005
+
+
 
 #files = sorted(glob.glob(datadir+f'*k{level:02n}.nc'))
 files = [datadir+f'LLC2160_filtered_day{day:03n}_k{level:02n}.nc' for day in days]
 
-data = xr.open_mfdataset(files, concat_dim='time', combine='nested', 
-                         chunks={'scale':1},
-                         data_vars=['energy_transfer', 'u', 'v']
-                         )
+data = xr.open_mfdataset(files, concat_dim='time', combine='nested', chunks={'scale':1})
 gridData = xr.open_dataset('/projects/NS9869K/LLC2160/LLC2160_grid.nc')
 bath = gridData.Depth
 
@@ -91,15 +88,15 @@ projection = ccrs.NearsidePerspective(central_longitude=7
                                       )
 
 fig = plt.figure(constrained_layout=True, figsize=(15,10))
-gs = fig.add_gridspec(2,2)
+gs = fig.add_gridspec(2,1)
 
 
-ax0 = fig.add_subplot(gs[:-1,1:])
-ax1 = fig.add_subplot(gs[-1,1:], sharex=ax0)
+ax0 = fig.add_subplot(gs[1:])
+#ax1 = fig.add_subplot(gs[-1,1:], sharex=ax0)
 
 axd = {
        'pi' : ax0,
-       'e' : ax1 
+      # 'e' : ax1 
        }
 
 #axd['map'].remove()
@@ -163,16 +160,24 @@ axd['map'].spines['geo'].set_visible(False)
 
 
 # plot energy transfer and spectrum
-axd['pi'].plot(scales*1e3, meanpi)
+for idx, color in enumerate(colors):
+    for j in pi.j:
+        for i in pi.i:
+            axd['pi'].plot(scales*1e3, pi.isel(time=idx).sel(i=i,j=j), alpha=0.3, color=color)
+            #axd['e'].plot(scales*1e3, e.isel(time=idx).sel(i=i,j=j), alpha=0.6)
+
+axd['pi'].plot(scales*1e3, meanpi, color='Black')
 axd['pi'].plot(scales*1e3,np.zeros(scales.shape), ls='--', color='Gray')
 axd['pi'].set_ylabel('Cross-scale energy transfer')
 #axd['pi'].fill_between(scales/1e3, meanpi+stdpi, meanpi-stdpi, alpha=0.2)
-
-axd['e'].plot(scales*1e3, meane)
-axd['e'].set_ylabel('Kinetic energy')
-axd['e'].set_xlabel('K [km-1]')
-
+axd['pi'].set_xlabel('K [km-1]')
 axd['pi'].set_xscale('log')
-axd['e'].set_xscale('log')
 
-fig.savefig(figdir+'ex01.png')
+# axd['e'].plot(scales*1e3, meane)
+# axd['e'].set_ylabel('Kinetic energy')
+# axd['e'].set_xlabel('K [km-1]')
+
+
+#axd['e'].set_xscale('log')
+
+fig.savefig(figdir+'spread1.png')
