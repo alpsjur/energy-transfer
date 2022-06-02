@@ -1,0 +1,79 @@
+{
+    "transect1" : {
+        "istart" : 1450,
+        "istop" : 1150,
+        "jstart" : 850,
+        "jstop" : 450,
+        "nr" : 1
+        },
+    "transect2" : {
+        "istart" : 1350,
+        "istop" : 1050,
+        "jstart" : 900,
+        "jstop" : 500,
+        "nr" : 2
+        },
+    "transect3" : {
+        "istart" : 1250,
+        "istop" : 950,
+        "jstart" : 950,
+        "jstop" : 550,
+        "nr" : 3
+        },
+    "transect4" : {
+        "istart" : 1150,
+        "istop" : 850,
+        "jstart" : 1000,
+        "jstop" : 600,
+        "nr" : 4
+        },
+    "transect5" : {
+        "istart" : 1700,
+        "istop" : 1850,
+        "jstart" : 1800,
+        "jstop" : 1650,
+        "nr" : 5
+        },
+    "transect6" : {
+        "istart" : 1600,
+        "istop" : 1750,
+        "jstart" : 1750,
+        "jstop" : 1600,
+        "nr" : 6
+        },
+    "transect7" : {
+        "istart" : 1500,
+        "istop" : 1620,
+        "jstart" : 1650,
+        "jstop" : 1450,
+        "nr" : 7
+        },
+    "transect8" : {
+        "istart" : 1400,
+        "istop" : 1520,
+        "jstart" : 1650,
+        "jstop" : 1450,
+        "nr" : 8
+        },
+    "transect9" : {
+        "istart" : 1300,
+        "istop" : 1420,
+        "jstart" : 1650,
+        "jstop" : 1450,
+        "nr" : 9
+        },
+    "transect10" : {
+        "istart" : 200,
+        "istop" : 200,
+        "jstart" : 1500,
+        "jstop" : 700,
+        "nr" : 10
+        },
+    "transect11" : {
+        "istart" : 100,
+        "istop" : 100,
+        "jstart" : 1500,
+        "jstop" : 700,
+        "nr" : 11
+        }
+    }

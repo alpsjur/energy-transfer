@@ -21,7 +21,7 @@ outpath = '/projects/NS9869K/LLC2160/A4_filtered/'
 #outpath = '/home/alsjur/PhD/Kode/test_data/'
 
 scales = np.geomspace(7000, 250000, num=20, dtype=int)
-days = np.arange(401,4452,10)
+days = np.arange(1,4452,10)
 levels = [21]
 depths = [100, 50, 5]
 filetype = 'avg'

@@ -15,6 +15,7 @@ from scipy import signal
 
 def coarsen_grid(dsGrid, coarsen_factor):
     start_index = int(np.floor(coarsen_factor/2))
+    print(start_index)
 
     dsGridc = dsGrid.isel(i=slice(start_index,None,coarsen_factor),i_g=slice(start_index,None,coarsen_factor),
                           j=slice(start_index,None,coarsen_factor),j_g=slice(start_index,None,coarsen_factor)
@@ -30,19 +31,18 @@ def coarsen_grid(dsGrid, coarsen_factor):
     kernelj = np.ones((coarsen_factor,1))
     kernel2d = np.ones((coarsen_factor,coarsen_factor))
 
-    dxFc = signal.convolve2d(dsGrid.dxF,kerneli,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
-    dyFc = signal.convolve2d(dsGrid.dyF,kernelj,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
-    rAc = signal.convolve2d(dsGrid.rA,kernel2d,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
-    
-    print(dxFc)
+    dxFc = signal.convolve2d(dsGrid.dxF,kerneli,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+    dyFc = signal.convolve2d(dsGrid.dyF,kernelj,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+    rAc = signal.convolve2d(dsGrid.rA,kernel2d,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
 
-    dxCc = signal.convolve2d(dsGrid.dxC,kerneli,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
-    dyCc = signal.convolve2d(dsGrid.dyC,kernelj,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
-    rAsc = signal.convolve2d(dsGrid.rAs,kernel2d,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
+    dxCc = signal.convolve2d(dsGrid.dxC,kerneli,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+    dyCc = signal.convolve2d(dsGrid.dyC,kernelj,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+    rAsc = signal.convolve2d(dsGrid.rAs,kernel2d,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
 
-    dxGc = signal.convolve2d(dsGrid.dxG,kerneli,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
-    dyGc = signal.convolve2d(dsGrid.dyG,kernelj,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
-    rAwc = signal.convolve2d(dsGrid.rAw,kernel2d,mode='same', boundary='fill')[coarsen_factor-1::coarsen_factor,coarsen_factor-1::coarsen_factor]
+    dxGc = signal.convolve2d(dsGrid.dxG,kerneli,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+    dyGc = signal.convolve2d(dsGrid.dyG,kernelj,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+    rAwc = signal.convolve2d(dsGrid.rAw,kernel2d,mode='same', boundary='fill')[start_index::coarsen_factor,start_index
+                                                                               ::coarsen_factor]
 
     dsGridc = dsGridc.assign(dxF=(['j','i'],dxFc), dyF=(['j','i'],dyFc), rA=(['j','i'],rAc),
                              dxC=(['j','i_g'],dxCc), dyC=(['j_g','i'],dyCc), rAs=(['j_g','i'],rAsc),

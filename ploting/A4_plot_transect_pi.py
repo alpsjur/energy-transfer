@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat May  7 16:46:34 2022
+Created on Wed Jun  1 09:28:11 2022
 
 @author: alsjur
 """
@@ -9,21 +9,30 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
 import cartopy.crs as ccrs
-import sys
 import pickle
 
-figdir = '/home/alsjur/nird/figures_temp/transects/LLC/'
+import sys
+sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
+from LLC2A4 import readROMSfile, LLC2A4
+
+figdir = '/home/alsjur/nird/figures_temp/transects/A4/'
 datadir = '/home/alsjur/nird/data_temp/'
 
 fontsize = 12
 
-level = 21
+depth = 100
+
+A4grid = readROMSfile('/home/alsjur/PhD/Data/test_data/A4/'+'ocean_avg_1827.nc')
+LLCgrid = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/'+'LLC2160_grid.nc')
 
 istart = int(sys.argv[1])
 istop = int(sys.argv[2])
 jstart = int(sys.argv[3])
 jstop = int(sys.argv[4])
 nr = int(sys.argv[5])
+
+istart, jstart = LLC2A4([istart, jstart], A4grid, LLCgrid)
+istop, jstop = LLC2A4([istop, jstop], A4grid, LLCgrid)
 
 
 def find_indexes(istart, istop, jstart, jstop):
@@ -52,10 +61,9 @@ def find_indexes(istart, istop, jstart, jstop):
 
 #sns.set_theme()
 
-gridData = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/LLC2160_grid.nc')
-bath = gridData.Depth
+bath = A4grid.h
 
-file = datadir+f'data_level{level}_transect{nr}.pickle'
+file = datadir+f'A4_depth{depth}_transect{nr}.pickle'
 
 with open(file, 'rb') as f:
     data = pickle.load(f)
@@ -68,8 +76,8 @@ lats = []
 bathc = []
 
 for i, j in zip(ii, jj):
-    lons.append(bath.XC.sel(i=i,j=j))
-    lats.append(bath.YC.sel(i=i,j=j))
+    lons.append(bath.lon_rho.sel(i=i,j=j))
+    lats.append(bath.lat_rho.sel(i=i,j=j))
     bathc.append(bath.sel(i=i,j=j))
 
 
@@ -99,14 +107,14 @@ vmin = 0
 vmax = bath.max()
 
 # plot map
-cm = axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC>0)
+cm = axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho>0)
             ,transform=ccrs.PlateCarree()
             ,cmap='Blues'
             ,vmin=vmin
             ,vmax=vmax
             #,zorder=5
             )
-axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC<0)
+axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho<0)
           ,transform=ccrs.PlateCarree()
           ,cmap='Blues'
           ,vmin=vmin
@@ -190,5 +198,4 @@ axd['bathymetry'].set_yticks(depthticks)
 
 #plt.show()
 
-fig.savefig(figdir+f'LLC_pi_level{level}_transect{nr:02n}.png')
-
+fig.savefig(figdir+f'A4_pi_depth{depth}_transect{nr:02n}.png')

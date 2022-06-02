@@ -29,7 +29,7 @@ start_day = 0
 stop_day = 778
 step = 5
 tot_workers = 4
-worker = 0#int(sys.argv[1])
+worker = 2#int(sys.argv[1])
 
 all_days = np.arange(start_day,stop_day,step)
 days = np.array_split(all_days,tot_workers)[worker]
@@ -89,7 +89,6 @@ for level in levels:
     for day in days:
         tic = time.perf_counter()
         filename = f'LLC2160_filtered_day{day:03n}_k{level:02n}.nc'
-        
         if exists(outpath+filename):
             continue
         
