@@ -16,9 +16,9 @@ from pyproj import Proj
 import gcm_filters
 
 import sys
-#sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
-sys.path.insert(0, '/home/alsjur/PhD/Kode/energy-transfer/analysis')
-from gcmFilterFunction import get_grid_vars, filter, calculate_energy_transfer, coarsen_grid, coarsen_data
+sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
+#sys.path.insert(0, '/home/alsjur/PhD/Kode/energy-transfer/analysis')
+from gcmFilterFunction import get_grid_vars, filter, calculate_energy_transfer, coarsen_grid, coarsen_data, coarsen_U
 
 
 #%%
@@ -26,8 +26,9 @@ from gcmFilterFunction import get_grid_vars, filter, calculate_energy_transfer, 
 datapath = '/home/alsjur/PhD/Data/test_data/LLC2160/'
 figpath = '/home/alsjur/PhD/Figurer/EnergyTransfer/method/'
 
-scales = np.geomspace(80000,300000,num=10,dtype=int)
-iterations = [15]
+scales = np.geomspace(100000,1000000,num=10,dtype=int)
+iterations = [5, 10, 15, 25]
+coarsen_factors = [2,3,4,5]
 day = 0
 
 
@@ -70,14 +71,14 @@ ds['uu'] = ds.u*ds.u
 ds['vv'] = ds.v*ds.v
 ds['uv'] = grid.interp(dsU.U, axis=['X'], boundary='fill')*grid.interp(dsV.V, axis=['Y'], boundary='fill')
 
-grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGrid)
+grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGrid, dsU.U)
 
 #%%
 def gcm_filter_many_iterations(ds, grid, scales, grid_vars_visc, grid_vars_diff, dx_min, iterations, kernel):
     results = []
     suptic = time.perf_counter()
     for n_iterations in iterations:
-        print(f'Starting on {n_iterations} iterations')
+        #print(f'Starting on {n_iterations} iterations')
         pis = []
         tic = time.perf_counter()
         for scale in scales:
@@ -100,110 +101,116 @@ def gcm_filter_many_iterations(ds, grid, scales, grid_vars_visc, grid_vars_diff,
     ds_gcm.coords['n_iterations'] = iterations
     
     return ds_gcm
+
+def gcm_filter_many_iterations_coarsening_factors(ds, grid, iterations, coarsen_factors, kernel):
+    results = []
+    cs = []
+    for coarsen_factor in coarsen_factors:
+        print(coarsen_factor)
+        coarsen_filter = gcm_filters.Filter(
+            filter_scale=coarsen_factor,
+            dx_min=1,
+            filter_shape=gcm_filters.FilterShape.TAPER,
+            grid_type=gcm_filters.GridType.REGULAR,
+        )
+        #filter to intermediate scale
+        Ubar = coarsen_filter.apply(ds.u, dims=['j', 'i'])
+        UUbar = coarsen_filter.apply(ds.uu, dims=['j', 'i'])
+        Vbar = coarsen_filter.apply(ds.v, dims=['j', 'i'])
+        VVbar = coarsen_filter.apply(ds.vv, dims=['j', 'i'])
+        UVbar = coarsen_filter.apply(ds.uv, dims=['j', 'i'])
+
+        Ubar = Ubar.swap_dims({'i':'i_g'})
+        UUbar = UUbar.swap_dims({'i':'i_g'})
+        Vbar = Vbar.swap_dims({'j':'j_g'})
+        VVbar = VVbar.swap_dims({'j':'j_g'})
+
+        dsbar = xr.Dataset()
+        dsbar['ubar'] = Ubar
+        dsbar['vbar'] = Vbar
+        dsbar['uubar'] = UUbar
+        dsbar['vvbar'] = VVbar
+        dsbar['uvbar'] = UVbar
+
+    
+        dsGridc = coarsen_grid(dsGrid, coarsen_factor)
+        dsc = coarsen_data(dsbar, coarsen_factor)
+
+        dsUc = coarsen_U(dsU, coarsen_factor)
+        #dsc = coarsen_data(ds, coarsen_factor)
+
+        dsc['u'] = dsc['u'].swap_dims({'i_g':'i'})
+        dsc['uu'] = dsc['uu'].swap_dims({'i_g':'i'})
+        dsc['v'] = dsc['v'].swap_dims({'j_g':'j'})
+        dsc['vv'] = dsc['vv'].swap_dims({'j_g':'j'})
+
+
+        gridc = xgcm.Grid(dsGridc
+                          , metrics=metrics
+                          , periodic=False
+                          )
+         
+        grid_vars_viscc, grid_vars_diffc, dx_minc = get_grid_vars(dsGridc, dsUc.U)
+
+        #dsGridr = dsGrid.rename({"XC": "lon", "YC": "lat"})
+        #dsGridcr = dsGridc.rename({"XC": "lon", "YC": "lat"})
+
+        #regridder = xe.Regridder(dsGridcr, dsGridr, "bilinear")
+        try:
+            ds_temp = gcm_filter_many_iterations(dsc, gridc, scales, grid_vars_viscc, grid_vars_diffc, dx_minc, iterations, 'gauss')
+            meanpi_coarse = gridc.average(ds_temp.energy_transfer, ['X','Y'])
+            results.append(meanpi_coarse)
+            cs.append(coarsen_factor)
+        except:
+            pass
+        
+    ds_coarse = xr.concat(results, dim='coarsen_factor')
+    ds_coarse.coords['coarsen_factor'] = cs
+    
+    return ds_coarse
 #%%
 # filter using gaussian kernel
 ds_fine = gcm_filter_many_iterations(ds, grid, scales, grid_vars_visc, grid_vars_diff, dx_min, iterations, 'gauss')
-
-
-#%%
-# coarsen data 
-
-# first, filter data to intermediate scale. Use scipy to coarsen in index space?
-
-coarsen_factor = 3
-
-coarsen_filter = gcm_filters.Filter(
-    filter_scale=coarsen_factor,
-    dx_min=1,
-    filter_shape=gcm_filters.FilterShape.TAPER,
-    grid_type=gcm_filters.GridType.REGULAR,
-)
-#filter to intermediate scale
-Ubar = coarsen_filter.apply(ds.u, dims=['j', 'i'])
-UUbar = coarsen_filter.apply(ds.uu, dims=['j', 'i'])
-Vbar = coarsen_filter.apply(ds.v, dims=['j', 'i'])
-VVbar = coarsen_filter.apply(ds.vv, dims=['j', 'i'])
-UVbar = coarsen_filter.apply(ds.uv, dims=['j', 'i'])
-
-Ubar = Ubar.swap_dims({'i':'i_g'})
-UUbar = UUbar.swap_dims({'i':'i_g'})
-Vbar = Vbar.swap_dims({'j':'j_g'})
-VVbar = VVbar.swap_dims({'j':'j_g'})
-
-dsbar = xr.Dataset()
-dsbar['ubar'] = Ubar
-dsbar['vbar'] = Vbar
-dsbar['uubar'] = UUbar
-dsbar['vvbar'] = VVbar
-dsbar['uvbar'] = UVbar
+meanpi_fine = grid.average(ds_fine.energy_transfer, ['X','Y'])
 
 #%%
-dsGridc = coarsen_grid(dsGrid, coarsen_factor)
-dsc = coarsen_data(dsbar, coarsen_factor)
-#dsc = coarsen_data(ds, coarsen_factor)
-#%%
+# coarsen data
+meanpi_coarse = gcm_filter_many_iterations_coarsening_factors(ds, grid, iterations, coarsen_factors, 'gauss')
 
-dsc['u'] = dsc['u'].swap_dims({'i_g':'i'})
-dsc['uu'] = dsc['uu'].swap_dims({'i_g':'i'})
-dsc['v'] = dsc['v'].swap_dims({'j_g':'j'})
-dsc['vv'] = dsc['vv'].swap_dims({'j_g':'j'})
-
-
-gridc = xgcm.Grid(dsGridc
-                  , metrics=metrics
-                  , periodic=False
-                  )
- 
-grid_vars_viscc, grid_vars_diffc, dx_minc = get_grid_vars(dsGridc)
-
-dsGridr = dsGrid.rename({"XC": "lon", "YC": "lat"})
-dsGridcr = dsGridc.rename({"XC": "lon", "YC": "lat"})
-
-regridder = xe.Regridder(dsGridcr, dsGridr, "bilinear")
-
-#%%
-ds_coarse = gcm_filter_many_iterations(dsc, gridc, scales, grid_vars_viscc, grid_vars_diffc, dx_minc, iterations, 'gauss')
 
 #%%
 # plot results
 
 # calculate mean for plotting
-meanpi_fine = grid.average(ds_fine.energy_transfer, ['X','Y'])
-meanpi_coarse = gridc.average(ds_coarse.energy_transfer, ['X','Y'])
 
 
-meane_fine = grid.average(ds_fine.energy, ['X','Y'])
-meane_coarse = gridc.average(ds_coarse.energy, ['X','Y'])
 
 
 
 sns.set_theme()
-fig, (ax1, ax2) = plt.subplots(2,1,figsize=(10,10))
+fig, ax = plt.subplots(figsize=(10,10))
 colors = sns.color_palette("viridis", len(iterations)*2)
+colors= ['red', 'blue', 'green', 'orange']
+alphas = [0.3, 0.5, 0.7, 0.9]
 
+#for i, n in enumerate([iterations[0]]):
 for i, n in enumerate(iterations):
     
     pif = meanpi_fine.sel(n_iterations=n)
-    ef = meane_fine.sel(n_iterations=n)
-    ax1.plot(scales/1e3,pif, marker='x', label='fine'
-             #, color=colors[i]
-             , color = 'red'
+
+    ax.plot(scales/1e3,pif, marker='x', label=f'fine n={n}'
+             #, color = colors[i]
              )
-    ax2.plot(scales/1e3,ef, marker='x', label='fine'
-             #, color=colors[i]
-             , color = 'red'
-             )
-    
-    pic = meanpi_coarse.sel(n_iterations=n)
-    ec = meane_coarse.sel(n_iterations=n)
-    ax1.plot(scales/1e3,pic, marker='x', label='coarse'
-             #, color=colors[i]
-             , color = 'blue'
-             )
-    ax2.plot(scales/1e3,ec, marker='x', label='coarse'
-             #, color=colors[i]
-             , color = 'blue'
-             )
+
+    #for j, c in enumerate([meanpi_coarse.coarsen_factor.values[1]]):
+    for j, c in enumerate(meanpi_coarse.coarsen_factor.values):
+        pic = meanpi_coarse.sel(n_iterations=n, coarsen_factor=c)
+
+        ax.plot(scales/1e3,pic, marker='x', label=f'coarse n={n} c={c}'
+                 #, color=colors[i]
+                 #, alpha = alphas[j]
+                 )
+
     
 
 #ax1.plot(scales/1e3,meanpi_taper, marker='x', label='taper', color = 'red')
@@ -213,8 +220,15 @@ for i, n in enumerate(iterations):
 #ax.set_xscale('log')
 #ax.set_ylim(-1.5e-10,0)
 #ax1.set_xlim(0,300)
-ax1.set_ylim(-2.5e-10,1e-10)
-ax2.set_ylim(0,1.5e-3)
+ax.set_ylim(-0.5e-10,0e-10)
 
 
-ax1.legend(ncol = 4)
+ax.legend(ncol = 4)
+
+# %%
+
+# for key, item in grid_vars_visc.items():
+#     itemc = grid_vars_viscc[key]
+#     print(key)
+#     print(item.sum(dim='i').values[0])
+#     print(itemc.sum(dim='i').values[0])

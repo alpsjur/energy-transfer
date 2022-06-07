@@ -15,7 +15,6 @@ from scipy import signal
 
 def coarsen_grid(dsGrid, coarsen_factor):
     start_index = int(np.floor(coarsen_factor/2))
-    print(start_index)
 
     dsGridc = dsGrid.isel(i=slice(start_index,None,coarsen_factor),i_g=slice(start_index,None,coarsen_factor),
                           j=slice(start_index,None,coarsen_factor),j_g=slice(start_index,None,coarsen_factor)
@@ -43,9 +42,13 @@ def coarsen_grid(dsGrid, coarsen_factor):
     dyGc = signal.convolve2d(dsGrid.dyG,kernelj,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
     rAwc = signal.convolve2d(dsGrid.rAw,kernel2d,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
 
+    dxVc = signal.convolve2d(dsGrid.dxV,kerneli,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+    dyUc = signal.convolve2d(dsGrid.dyU,kernelj,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
+
     dsGridc = dsGridc.assign(dxF=(['j','i'],dxFc), dyF=(['j','i'],dyFc), rA=(['j','i'],rAc),
                              dxC=(['j','i_g'],dxCc), dyC=(['j_g','i'],dyCc), rAs=(['j_g','i'],rAsc),
-                             dxG=(['j_g','i'],dxGc), dyG=(['j','i_g'],dyGc), rAw=(['j','i_g'],rAwc)
+                             dxG=(['j_g','i'],dxGc), dyG=(['j','i_g'],dyGc), rAw=(['j','i_g'],rAwc),
+                             dxV=(['j_g','i_g'],dxVc), dyU=(['j_g','i_g'],dyUc)
                              )
     
     return dsGridc
@@ -58,18 +61,25 @@ def coarsen_data(dsbar, coarsen_factor):
     dsbarc = dsbarc.rename({'ubar':'u', 'vbar':'v', 'uubar':'uu', 'uvbar':'uv', 'vvbar':'vv'})
     
     return dsbarc
+
+def coarsen_U(u, coarsen_factor):
+    start_index = int(np.floor(coarsen_factor/2))
+    uc = u.isel(i_g=slice(start_index,None,coarsen_factor),
+                        j=slice(start_index,None,coarsen_factor)
+                        )
+    
+    return uc
     
 
-def get_grid_vars(dsGrid):
+def get_grid_vars(dsGrid, maskvar):
     mask_data = np.ones((len(dsGrid.j),len(dsGrid.i)))
-    mask_data[dsGrid.Depth==0] = 0
+    mask_data[maskvar > 1e10] = 0
     wet_mask = xr.DataArray(mask_data, dims=['j', 'i'])
     # grid info centered at T-points
     wet_mask_t = wet_mask
     dxT = dsGrid.dxF
     dyT = dsGrid.dyF
     area = dsGrid.rA
-
     # grid info centered at U-points
     dxCu = dsGrid.dxC.swap_dims({'i_g': 'i'})
     dyCu = dsGrid.dyG.swap_dims({'i_g': 'i'})
@@ -82,7 +92,6 @@ def get_grid_vars(dsGrid):
     wet_mask_q = wet_mask
     dxBu = dsGrid.dxV.swap_dims({'i_g': 'i', 'j_g': 'j'})
     dyBu = dsGrid.dyU.swap_dims({'i_g': 'i', 'j_g': 'j'})
-
     dx_min = min(dxT.where(wet_mask_t).min(), dyT.where(wet_mask_t).min())
     dx_min = dx_min.values
 

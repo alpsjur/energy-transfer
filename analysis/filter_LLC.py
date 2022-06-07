@@ -18,10 +18,10 @@ import sys
 
 filepath = '/projects/NS9869K/LLC2160/'
 #filepath = '/home/alsjur/PhD/Kode/test_data/'
-outpath = '/projects/NS9869K/LLC2160/gcm_filtered/'
+outpath = '/projects/NS9869K/LLC2160/LLC_filtered/'
 
 scales = np.geomspace(2100,150000,num=20,dtype=int)
-levels = [21, 16, 28, 34, 39, 52, 67]
+levels = [21]
 filetype = 'snapshot'
 
 # sycle through days in a way than ensures a spread
@@ -50,7 +50,7 @@ for scale in scales:
     elif scale <= 100000:
         iterations.append(15)
     else:
-        iterations.append(25)
+        iterations.append(30)
     
 ### Grid information ###
 dsGrid = xr.open_dataset(filepath+'LLC2160_grid.nc')#.isel(i=slice(1000,1500),
@@ -82,10 +82,10 @@ grid = xgcm.Grid(dsGrid
                  )
 
 
-grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGrid)
-
-
 for level in levels:
+    maskU = xr.open_dataset(filepath+f'LLC2160_U_Arctic_day_0000_k{level:03n}_{filetype}.nc').squeeze().U.values
+    print(maskU.shape)
+    grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGrid, maskU)
     for day in days:
         tic = time.perf_counter()
         filename = f'LLC2160_filtered_day{day:03n}_k{level:02n}.nc'
@@ -95,6 +95,10 @@ for level in levels:
         print(f'Level {level} day {day}')
         dsU = xr.open_dataset(filepath+f'LLC2160_U_Arctic_day_{day:04n}_k{level:03n}_{filetype}.nc').squeeze()
         dsV = xr.open_dataset(filepath+f'LLC2160_V_Arctic_day_{day:04n}_k{level:03n}_{filetype}.nc').squeeze()
+        
+        # set fill value of 9.9..e36 to nan
+        dsU = dsU.where[dsU['U']<1e30]
+        dsV = dsV.where[dsV['V']<1e30]
         
         # dsU = dsU.sel(i_g=slice(i_start,i_stop), j=slice(j_start,j_stop))
         # dsV = dsV.sel(i=slice(i_start,i_stop), j_g=slice(j_start,j_stop))

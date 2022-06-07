@@ -93,7 +93,7 @@ for depth in depths:
     
     pi, dpi, e, de = spectrum_at_depth(depth, grid)
     
-    scales = 1/pi.scale.values()
+    scales = 1/pi.scale.values
 
 
     # save results for later
