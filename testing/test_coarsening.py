@@ -16,7 +16,8 @@ from pyproj import Proj
 import gcm_filters
 
 import sys
-sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
+#sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
+sys.path.insert(0, '/home/alsjur/PhD/Kode/energy-transfer/analysis')
 from gcmFilterFunction import get_grid_vars, filter, calculate_energy_transfer, coarsen_grid, coarsen_data
 
 
@@ -139,6 +140,7 @@ dsbar['uvbar'] = UVbar
 #%%
 dsGridc = coarsen_grid(dsGrid, coarsen_factor)
 dsc = coarsen_data(dsbar, coarsen_factor)
+#dsc = coarsen_data(ds, coarsen_factor)
 #%%
 
 dsc['u'] = dsc['u'].swap_dims({'i_g':'i'})

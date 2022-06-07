@@ -41,8 +41,7 @@ def coarsen_grid(dsGrid, coarsen_factor):
 
     dxGc = signal.convolve2d(dsGrid.dxG,kerneli,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
     dyGc = signal.convolve2d(dsGrid.dyG,kernelj,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
-    rAwc = signal.convolve2d(dsGrid.rAw,kernel2d,mode='same', boundary='fill')[start_index::coarsen_factor,start_index
-                                                                               ::coarsen_factor]
+    rAwc = signal.convolve2d(dsGrid.rAw,kernel2d,mode='same', boundary='fill')[start_index::coarsen_factor,start_index::coarsen_factor]
 
     dsGridc = dsGridc.assign(dxF=(['j','i'],dxFc), dyF=(['j','i'],dyFc), rA=(['j','i'],rAc),
                              dxC=(['j','i_g'],dxCc), dyC=(['j_g','i'],dyCc), rAs=(['j_g','i'],rAsc),
