@@ -68,7 +68,7 @@ ds['uu'] = ds.u*ds.u
 ds['vv'] = ds.v*ds.v
 ds['uv'] = grid.interp(dsU.U, axis=['X'], boundary='fill')*grid.interp(dsV.V, axis=['Y'], boundary='fill')
 
-grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGrid)
+grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGrid, dsU.U)
 
 #%%
 def gcm_filter_many_iterations(ds, scales, grid_vars_visc, grid_vars_diff, dx_min, iterations, kernel):
@@ -157,109 +157,7 @@ toc = time.perf_counter()
 runtime = (toc-tic)/60
 print(f"Runtime scipy {runtime:0.4f} minutes")
 #%%
-# # coarsen data 
 
-# # first, filter data to intermediate scale. Use scipy to coarsen in index space?
-
-# coarsen_factor = 3
-# intermediate_scale = coarsen_factor*1500
-
-# filter to intermediate scale
-# assume regular grid, so filtered in index space, not physical space
-# #dsbar = filter(ds, intermediate_scale, grid_vars_visc, grid_vars_diff, dx_min, n_iterations=1)
-
-# dsGridc = coarsen_grid(dsGrid, coarsen_factor)
-# dsc = coarsen_data(dsbar, coarsen_factor)
-
-# dsc['u'] = dsc['u'].swap_dims({'i_g':'i'})
-# dsc['uu'] = dsc['uu'].swap_dims({'i_g':'i'})
-# dsc['v'] = dsc['v'].swap_dims({'j_g':'j'})
-# dsc['vv'] = dsc['vv'].swap_dims({'j_g':'j'})
-
-# gridc = xgcm.Grid(dsGridc
-#                  , metrics=metrics
-#                  , periodic=False
-#                  )
- 
-# grid_vars_viscc, grid_vars_diffc, dx_minc = get_grid_vars(dsGridc)
-
-# dsGridr = dsGrid.rename({"XC": "lon", "YC": "lat"})
-# dsGridcr = dsGridc.rename({"XC": "lon", "YC": "lat"})
-
-# regridder = xe.Regridder(dsGridcr, dsGridr, "bilinear")
-
-
-# # filter for different number of iterations
-# resultsc = []
-# suptic = time.perf_counter()
-# for n_iterations in iterations:
-#     print(f'Starting on {n_iterations} iterations')
-#     pis = []
-#     tic = time.perf_counter()
-#     for scale in scales[3:]:
-#         #print('Starting scale',scale)
-#         dsbarc = filter(dsc, scale, grid_vars_viscc, grid_vars_diffc, dx_minc, n_iterations)
-        
-#         # interpolate to original grid
-#         dsbarc['ubar'] = gridc.interp(dsbarc.ubar, axis=['X'], boundary='fill')
-#         dsbarc['uubar'] = gridc.interp(dsbarc.uubar, axis=['X'], boundary='fill')
-#         dsbarc['vbar'] = gridc.interp(dsbarc.vbar, axis=['Y'], boundary='fill')
-#         dsbarc['vvbar'] = gridc.interp(dsbarc.vvbar, axis=['Y'], boundary='fill')
-        
-#         dsbarc = dsbarc.rename({"XC": "lon", "YC": "lat"})
-#         dsbar['ubar'] = grid.interp(regridder(dsbarc.ubar), axis=['X'], boundary='fill')
-#         dsbar['uubar'] = grid.interp(regridder(dsbarc.uubar), axis=['X'], boundary='fill')
-#         dsbar['vbar'] = grid.interp(regridder(dsbarc.vbar), axis=['Y'], boundary='fill')
-#         dsbar['vvbar'] = grid.interp(regridder(dsbarc.vvbar), axis=['Y'], boundary='fill')
-#         dsbar['uvbar'] = regridder(dsbarc.uvbar)
-#         #dsbar = dsbar.rename({"lon": "XC", "lat": "YC"})
-        
-#         # dsbar['ubar'] = grid.interp(dsbar.ubar, axis=['X'], boundary='fill')
-#         # dsbar['uubar'] = grid.interp(dsbar.uubar, axis=['X'], boundary='fill')
-#         # dsbar['vbar'] = grid.interp(dsbar.vbar, axis=['Y'], boundary='fill')
-#         # dsbar['vvbar'] = grid.interp(dsbar.vvbar, axis=['Y'], boundary='fill')
-        
-#         pi = calculate_energy_transfer(dsbar, grid, calculate_energy=True)
-#         pis.append(pi)
-        
-#     dspi = xr.concat(pis, dim='L')
-#     dspi.coords['L'] = scales[3:]
-#     toc = time.perf_counter()
-#     runtime = (toc-tic)/60
-#     print(f"Runtime {n_iterations} iteration(s) {runtime:0.4f} minutes")
-#     resultsc.append(dspi)
-# suptac = time.perf_counter()
-# supruntime = (suptac-suptic)/60
-# print(f"Runtime full dataset {supruntime} minutes")    
-
-# ds_gcmc = xr.concat(resultsc, dim='n_iterations')
-# ds_gcmc.coords['n_iterations'] = iterations
-
-# dsTemp = dsGrid.rename({'XC':'lon', 'YC':'lat', 'XG':'lon_g', 'YG':'lat_g'})
-# dsTemp['u'] = grid.interp(dsU.U, axis=['X'], boundary='fill')
-# dsTemp['v'] = grid.interp(dsV.V, axis=['Y'], boundary='fill')
-# dsTemp['Depth'] = dsGrid.Depth
-# dsTemp = dsTemp.drop('Theta')
-
-# dsGrid_coars = dsGrid.sel(i=slice(i_start,i_stop,coarsen_factor),i_g=slice(i_start,i_stop,coarsen_factor),
-#                      j=slice(j_start,j_stop,coarsen_factor),j_g=slice(j_start,j_stop,coarsen_factor)
-#                      )
-# dsGrid_coars = dsGrid_coars.rename({'XC':'lon', 'YC':'lat', 'XG':'lon_g', 'YG':'lat_g'})
-
-# regridder = xe.Regridder(dsTemp, dsGrid_coars, "bilinear")
-# ds_coars = regridder(dsTemp)
-# ds_coars['Depth'] = regridder(dsTemp.Depth)
-
-# # filter
-# grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(ds_coars)
-
-
-
-
-# # interpolate back to original grid 
-
-
-#%%
 # plot results
 
 # calculate mean for plotting

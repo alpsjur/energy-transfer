@@ -26,10 +26,10 @@ from gcmFilterFunction import get_grid_vars, filter, calculate_energy_transfer, 
 datapath = '/home/alsjur/PhD/Data/test_data/LLC2160/'
 figpath = '/home/alsjur/PhD/Figurer/EnergyTransfer/method/'
 
-scales = np.geomspace(100000,1000000,num=10,dtype=int)
-iterations = [5, 10, 15, 25]
-coarsen_factors = [2,3,4,5]
-day = 0
+scales = np.geomspace(50000,150000,num=10,dtype=int)
+iterations = [5, 10, 25, 40]
+coarsen_factors = [2,3]
+day = 101
 
 
 # load data
@@ -38,10 +38,15 @@ dsV = xr.open_dataset(datapath+f'LLC2160_V_Arctic_day_{day:04n}_k021_snapshot.nc
 dsGrid = xr.open_dataset(datapath+'LLC2160_grid.nc')#.squeeze()
 
 # select region
-i_start = 1080-200
-i_stop = 1080+200
-j_start = 1080-200
-j_stop = 1080+200
+i_start = 1080-300
+i_stop = 1080+300
+j_start = 1080-300
+j_stop = 1080+300
+
+# i_start = 0
+# i_stop = 2159
+# j_start = 0
+# j_stop = 2159
 
 dsU = dsU.sel(i_g=slice(i_start,i_stop), j=slice(j_start,j_stop))
 dsV = dsV.sel(i=slice(i_start,i_stop), j_g=slice(j_start,j_stop))
@@ -152,14 +157,17 @@ def gcm_filter_many_iterations_coarsening_factors(ds, grid, iterations, coarsen_
          
         grid_vars_viscc, grid_vars_diffc, dx_minc = get_grid_vars(dsGridc, dsUc.U)
 
-        #dsGridr = dsGrid.rename({"XC": "lon", "YC": "lat"})
-        #dsGridcr = dsGridc.rename({"XC": "lon", "YC": "lat"})
+        dsGridr = dsGrid.rename({"XC": "lon", "YC": "lat"})
+        dsGridcr = dsGridc.rename({"XC": "lon", "YC": "lat"})
 
-        #regridder = xe.Regridder(dsGridcr, dsGridr, "bilinear")
+        regridder = xe.Regridder(dsGridcr, dsGridr, "bilinear")
+        
         try:
             ds_temp = gcm_filter_many_iterations(dsc, gridc, scales, grid_vars_viscc, grid_vars_diffc, dx_minc, iterations, 'gauss')
+            dsc = regridder(ds_temp)
             meanpi_coarse = gridc.average(ds_temp.energy_transfer, ['X','Y'])
             results.append(meanpi_coarse)
+            #results.append(dsc)
             cs.append(coarsen_factor)
         except:
             pass
@@ -175,8 +183,9 @@ meanpi_fine = grid.average(ds_fine.energy_transfer, ['X','Y'])
 
 #%%
 # coarsen data
+# ds_coarse = gcm_filter_many_iterations_coarsening_factors(ds, grid, iterations, coarsen_factors, 'gauss')
+# meanpi_coarse = grid.average(ds_coarse.energy_transfer, ['X','Y'])
 meanpi_coarse = gcm_filter_many_iterations_coarsening_factors(ds, grid, iterations, coarsen_factors, 'gauss')
-
 
 #%%
 # plot results
@@ -202,7 +211,7 @@ for i, n in enumerate(iterations):
              #, color = colors[i]
              )
 
-    #for j, c in enumerate([meanpi_coarse.coarsen_factor.values[1]]):
+    #for j, c in enumerate([meanpi_coarse.coarsen_factor.values[0]]):
     for j, c in enumerate(meanpi_coarse.coarsen_factor.values):
         pic = meanpi_coarse.sel(n_iterations=n, coarsen_factor=c)
 
@@ -220,11 +229,11 @@ for i, n in enumerate(iterations):
 #ax.set_xscale('log')
 #ax.set_ylim(-1.5e-10,0)
 #ax1.set_xlim(0,300)
-ax.set_ylim(-0.5e-10,0e-10)
+ax.set_ylim(-1.5e-10,0e-10)
 
 
 ax.legend(ncol = 4)
-
+#fig.savefig(figpath+'test_coarsening4.png')
 # %%
 
 # for key, item in grid_vars_visc.items():

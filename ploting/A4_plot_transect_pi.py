@@ -12,7 +12,7 @@ import cartopy.crs as ccrs
 import pickle
 
 import sys
-sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
+sys.path.insert(0, '../analysis')
 from LLC2A4 import readROMSfile, LLC2A4
 
 figdir = '/home/alsjur/nird/figures_temp/transects/A4/'
@@ -20,7 +20,7 @@ datadir = '/home/alsjur/nird/data_temp/'
 
 fontsize = 12
 
-depth = 100
+depth = 'mean'
 
 A4grid = readROMSfile('/home/alsjur/PhD/Data/test_data/A4/'+'ocean_avg_1827.nc')
 LLCgrid = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/'+'LLC2160_grid.nc')

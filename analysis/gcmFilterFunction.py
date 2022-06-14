@@ -13,6 +13,45 @@ import xgcm
 import xesmf as xe
 from scipy import signal
 
+def readROMSfile(filename):
+    '''
+    This functions makes sure that the dimensions match between i and i_g.
+    This means that we need to remove one row and one column.
+    Here, the first row and column is removed, menaing that 
+    i_g and j_g is later spesified as left in xgcm coords.
+    If the last clumn/row is removed instead, i_g and j_g is right in the 
+    coordinates. 
+    '''
+    # read file with xarray
+    ds_temp = xr.open_dataset(filename)
+    # remove first column and row 
+    ds = ds_temp.isel(eta_rho=slice(1,None),
+                      xi_rho=slice(1,None),
+                      eta_u=slice(1,None),
+                      xi_v=slice(1,None)
+                      )
+    # rename variables to match MITgcm
+    ds = ds.rename({'eta_rho': 'j'
+                    , 'xi_rho': 'i'
+                    , 'eta_u': 'j'
+                    , 'xi_u': 'i_g'
+                    , 'eta_v': 'j_g'
+                    , 'xi_v' : 'i'
+                    , 'lon_rho' : 'XC'
+                    , 'lat_rho' : 'YC'
+                    })
+    
+    dx = 1/ds.pm.values
+    dy = 1/ds.pn.values
+    area = dx*dy
+
+    ds = ds.assign(dxF=(['j','i'],dx), dyF=(['j','i'],dy), rA=(['j','i'],area),
+                   dxC=(['j','i_g'],dx), dyC=(['j_g','i'],dy), rAs=(['j_g','i'],area),
+                   dxG=(['j_g','i'],dx), dyG=(['j','i_g'],dy), rAw=(['j','i_g'],area),
+                   dxV=(['j_g','i_g'],dx), dyU=(['j_g','i_g'],dy)
+        )
+    return ds
+
 def coarsen_grid(dsGrid, coarsen_factor):
     start_index = int(np.floor(coarsen_factor/2))
 
@@ -69,11 +108,27 @@ def coarsen_U(u, coarsen_factor):
                         )
     
     return uc
-    
 
-def get_grid_vars(dsGrid, maskvar):
+
+def coarsen_depth(depth, coarsen_factor):
+    start_index = int(np.floor(coarsen_factor/2))
+    depthc = depth.isel(i=slice(start_index,None,coarsen_factor),
+                        j=slice(start_index,None,coarsen_factor)
+                        )
+    
+    return depthc
+
+def get_grid_vars(dsGrid, maskvar, ROMS=False, depth=0):
     mask_data = np.ones((len(dsGrid.j),len(dsGrid.i)))
-    mask_data[maskvar > 1e10] = 0
+    if ROMS:
+        # remove where it is too shallow
+        mask_data[maskvar<depth] = 0
+        
+        # remove land
+        landmask = dsGrid.mask_rho.values
+        mask_data[landmask==0] = 0
+    else:
+        mask_data[maskvar > 1e10] = 0
     wet_mask = xr.DataArray(mask_data, dims=['j', 'i'])
     # grid info centered at T-points
     wet_mask_t = wet_mask

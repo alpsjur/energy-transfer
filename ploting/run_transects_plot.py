@@ -9,7 +9,7 @@ import os
 import json
 
 # read transect defininitions from file
-with open('/home/alsjur/nird/energy-transfer/data/LLCtransects.txt') as f:
+with open('../data/LLCtransects.txt') as f:
     data = f.read()
     transects = json.loads(data)
 
@@ -21,5 +21,5 @@ for transect, data in transects.items():
     nr = data['nr']
     
     print('Starting',transect)
-    os.system(f'python LLC_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')
-    #os.system(f'python A4_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')
+    #os.system(f'python LLC_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')
+    os.system(f'python A4_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')

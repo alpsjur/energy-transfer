@@ -9,7 +9,8 @@ import os
 import json
 
 # read transect defininitions from file
-with open('../data/LLCregions.txt') as f:
+#with open('../data/LLCregions.txt') as f:
+with open('../data/A4regions.txt') as f:    
     data = f.read()
     regions = json.loads(data)
 

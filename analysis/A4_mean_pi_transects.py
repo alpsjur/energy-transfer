@@ -18,10 +18,10 @@ datadir = '/projects/NS9869K/LLC2160/A4_filtered/'
 outdir = '/nird/home/annals/data_temp/'
 
 
-depth = 100
+depth = 'mean'
 
 gridData = readROMSfile('/tos-project3/NS9081K/NORSTORE_OSL_DISK/NS9081K/shared/A4/A4_nudging_off/outputs/'+'ocean_avg_1827.nc')
-LLCgrid = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/'+'LLC2160_grid.nc')
+LLCgrid = xr.open_dataset('/projects/NS9869K/LLC2160/'+'LLC2160_grid.nc')
 
 istart = int(sys.argv[1])
 istop = int(sys.argv[2])
@@ -57,7 +57,8 @@ def find_indexes(istart, istop, jstart, jstop):
     return ii, jj
 
 
-files = sorted(glob.glob(datadir+f'A4_filtered_day*_depth{depth:03n}.nc'))
+#files = sorted(glob.glob(datadir+f'A4_filtered_day*_depth{depth:03n}.nc'))
+files = sorted(glob.glob(datadir+'A4_filtered_day*_depthmean.nc'))
 
 data = xr.open_mfdataset(files, concat_dim='time', combine='nested')
 bath = gridData.h

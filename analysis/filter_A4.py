@@ -81,6 +81,7 @@ for scale in scales:
         iterations.append(75)
 
 # grid info centered at T-points
+# this must be fixed to account for varying boundary with depth
 wet_mask_t = dsGrid.mask_rho
 dxT = 1/dsGrid.pm
 dyT = 1/dsGrid.pn

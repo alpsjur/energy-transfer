@@ -9,9 +9,6 @@ import os
 import xarray as xr
 import json
 
-gridData = xr.open_dataset('/projects/NS9869K/LLC2160/LLC2160_grid.nc')
-#gridData = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/LLC2160_grid.nc')
-bath = gridData.Depth
 
 # read regions defininitions from file
 with open('/home/alsjur/nird/energy-transfer/data/LLCregions.txt') as f:
@@ -26,5 +23,7 @@ for region, data in regions.items():
     nr = data['nr']
     
     print('Starting',region)
-    os.system(f'python LLC_plot_regional_pi_several_depths.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')
+    #os.system(f'python LLC_plot_regional_pi_several_depths.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')
     #os.system(f'python LLC_plot_regional_pi.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')
+    
+    os.system(f'python A4_plot_regional_pi_several_depths.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')

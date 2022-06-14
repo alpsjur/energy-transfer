@@ -95,7 +95,7 @@ for level in levels:
     
     pi, dpi, e, de = spectrum_at_level(level, days, grid)
     
-    scales = 1/pi.scale.values()
+    scales = 1/pi.scale.values
 
 
     # save results for later
