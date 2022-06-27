@@ -45,15 +45,40 @@ def LLC2A4(indexes, A4grid, LLCgrid):
     LLClat = LLCgrid.YC.sel(i=i,j=j).values
     
     # Find the A4 index of the grid point nearest LLClon/LLClat.   
-    abslat = np.abs(A4grid.lat_rho-LLClat)
-    abslon = np.abs(A4grid.lon_rho-LLClon)
+    abslat = np.abs(A4grid.YC-LLClat)
+    abslon = np.abs(A4grid.XC-LLClon)
     c = np.maximum(abslon, abslat)
     
     ([A4j], [A4i]) = np.where(c == np.min(c))
     
     # Use index location to get the values at the j, i index
-    # A4lon = A4grid.lon_rho.sel(i=A4i,j=A4j).values
-    # A4lat = A4grid.lat_rho.sel(i=A4i,j=A4j).values
+    # A4lon = A4grid.XC.sel(i=A4i,j=A4j).values
+    # A4lat = A4grid.YC.sel(i=A4i,j=A4j).values
     
     return(A4i, A4j)
+
+def fine2coarse(indexes, finegrid, coarsegrid):
+    i, j = indexes 
+    
+    # First, find lon/lat at grid point in LLC
+    lonf = finegrid.XC.sel(i=i,j=j).values
+    latf = finegrid.YC.sel(i=i,j=j).values
+    
+    # Find the A4 index of the grid point nearest LLClon/LLClat.   
+    abslat = np.abs(coarsegrid.YC-latf)
+    abslon = np.abs(coarsegrid.XC-lonf)
+    c = np.maximum(abslon, abslat)
+    
+    ([jc], [ic]) = np.where(c == np.min(c))
+    
+    # Use index location to get the values at the j, i index
+    # A4lon = A4grid.XC.sel(i=A4i,j=A4j).values
+    # A4lat = A4grid.YC.sel(i=A4i,j=A4j).values
+    
+    return(ic, jc)
+
+def coarse2fine(indexc, coarsen_factor):
+    start_index = int(np.floor(coarsen_factor/2))
+    index = indexc*coarsen_factor+start_index
+    return index
         

@@ -21,15 +21,15 @@ outpath = '/projects/NS9869K/LLC2160/A4_filtered/'
 #outpath = '/home/alsjur/PhD/Kode/test_data/'
 
 scales = np.geomspace(7000, 500000, num=30, dtype=int)[:22]
-all_days = np.arange(1,4452,10)
-#all_days = np.arange(1827,4452,10)
-depth = 100
+# all_days = np.arange(1,4452,10)
+all_days = np.arange(1827,4452,10)
+depth = 'mean'
 filetype = 'avg'
 
 #all_days = np.arange(1481,2241,10)
 
-tot_screens = 4
-screen = 3#int(sys.argv[1])
+tot_screens = 2
+screen = 1#int(sys.argv[1])
 
 days = np.array_split(all_days,tot_screens)[screen]
 
@@ -92,10 +92,12 @@ for scale in scales:
         iterations.append(1)  
     elif scale <= 30000:
         iterations.append(5)
+    elif scale <= 60000:
+        iterations.append(15)
     elif scale <= 100000:
-        iterations.append(20)
+        iterations.append(30)
     elif scale <= 200000:
-        iterations.append(50)
+        iterations.append(60)
     else:
         iterations.append(75)
 
@@ -104,8 +106,8 @@ grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGrid, dsGrid.h.values, 
 #%%
 def calculate_filtered(day):
     tic = time.perf_counter()
-    filename = f'A4_filtered_day{day:04n}_depth{depth:03n}.nc'
-    #filename = f'A4_filtered_day{day:04n}_depthmean.nc'
+    #filename = f'A4_filtered_day{day:04n}_depth{depth:03n}.nc'
+    filename = f'A4_filtered_day{day:04n}_depthmean.nc'
     
     print(f'Depth {depth} day {day}')
 
@@ -117,20 +119,20 @@ def calculate_filtered(day):
     z_rho = sdepth(H, Hc, C)
     landmask = ds_temp.mask_rho.values
     
-    u = zslice(ds_temp.u, z_rho, -depth)
-    v = zslice(ds_temp.v, z_rho, -depth)
+    # u = zslice(ds_temp.u, z_rho, -depth, Vtransform=2)
+    # v = zslice(ds_temp.v, z_rho, -depth, Vtransform=2)
     
-    u[H<depth] = 0
-    v[H<depth] = 0
+    # u[H<depth] = 0
+    # v[H<depth] = 0
     
-    u[landmask==0] = 0
-    v[landmask==0] = 0
-
-    # u = ds_temp.ubar.values
-    # v = ds_temp.vbar.values
-
     # u[landmask==0] = 0
     # v[landmask==0] = 0
+
+    u = ds_temp.ubar.values
+    v = ds_temp.vbar.values
+
+    u[landmask==0] = 0
+    v[landmask==0] = 0
 
     ds_temp['u'] = (('j','i_g'),u)
     ds_temp['v'] = (('j_g','i'),v)
@@ -173,4 +175,4 @@ def calculate_filtered(day):
     return None
     #return ds_out
 
-out = Parallel(n_jobs=4)(delayed(calculate_filtered)(day) for day in days)
+out = Parallel(n_jobs=6)(delayed(calculate_filtered)(day) for day in days)

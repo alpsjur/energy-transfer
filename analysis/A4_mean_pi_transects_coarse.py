@@ -13,7 +13,7 @@ import sys
 import pickle
 import glob
 from LLC2A4 import LLC2A4
-from gcmFilterFunction import readROMSfile
+from gcmFilterFunction import readROMSfile, coarsen_grid
 
 
 datadir = '/projects/NS9869K/LLC2160/A4_filtered/'
@@ -21,8 +21,10 @@ outdir = '/nird/home/annals/data_temp/'
 
 
 depth = 'mean'
+coarsen_factor = 3
 
 gridData = readROMSfile('/tos-project3/NS9081K/NORSTORE_OSL_DISK/NS9081K/shared/A4/A4_nudging_off/outputs/'+'ocean_avg_1827.nc')
+gridData = coarsen_grid(gridData, coarsen_factor)
 LLCgrid = xr.open_dataset('/projects/NS9869K/LLC2160/'+'LLC2160_grid.nc')
 
 istart = int(sys.argv[1])
@@ -60,7 +62,8 @@ def find_indexes(istart, istop, jstart, jstop):
 
 
 #files = sorted(glob.glob(datadir+f'A4_filtered_day*_depth{depth:03n}.nc'))
-files = sorted(glob.glob(datadir+f'A4_filtered_day*_depth{depth}.nc'))
+#files = sorted(glob.glob(datadir+f'A4_filtered_day*_depth{depth}.nc'))
+files = sorted(glob.glob(datadir+f'A4_filtered_day*_depth{depth}_coarse{coarsen_factor}.nc'))
 
 data = xr.open_mfdataset(files, concat_dim='time', combine='nested')
 bath = gridData.h
@@ -97,6 +100,6 @@ datadict = {
     'bathymetry' : bathc 
     }
 
-with open(outdir+f'A4_depth{depth}_transect{nr}.pickle', 'wb') as f:
+with open(outdir+f'A4_depth{depth}_transect{nr}_coarse{coarsen_factor}.pickle', 'wb') as f:
     # Pickle the 'data' dictionary using the highest protocol available.
     pickle.dump(datadict, f, pickle.HIGHEST_PROTOCOL)

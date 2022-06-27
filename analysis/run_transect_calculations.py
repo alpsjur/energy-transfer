@@ -23,4 +23,5 @@ for transect, data in transects.items():
     
     print('Starting',transect)
     #os.system(f'python LLC_mean_pi_transect.py {istart} {istop} {jstart} {jstop} {nr}')
-    os.system(f'python A4_mean_pi_transects.py {istart} {istop} {jstart} {jstop} {nr}')
+    #os.system(f'python A4_mean_pi_transects.py {istart} {istop} {jstart} {jstop} {nr}')
+    os.system(f'python A4_mean_pi_transects_coarse.py {istart} {istop} {jstart} {jstop} {nr}')

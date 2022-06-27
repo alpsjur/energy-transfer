@@ -9,11 +9,15 @@ import os
 import xarray as xr
 import json
 
-
+coarsen_factor = 3
 # read regions defininitions from file
-with open('/home/alsjur/nird/energy-transfer/data/LLCregions.txt') as f:
+with open(f'/home/alsjur/nird/energy-transfer/data/A4regions_c{coarsen_factor}.txt') as f:
     data = f.read()
     regions = json.loads(data)
+
+# with open('/home/alsjur/nird/energy-transfer/data/LLCregions.txt') as f:
+#     data = f.read()
+#     regions = json.loads(data)
 
 for region, data in regions.items():
     idx_start = data['idx_start']

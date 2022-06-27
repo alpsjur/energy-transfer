@@ -10,10 +10,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cartopy.crs as ccrs
 import pickle
+import cmocean
 
 import sys
 sys.path.insert(0, '../analysis')
-from LLC2A4 import readROMSfile, LLC2A4
+from LLC2A4 import LLC2A4
+from gcmFilterFunction import coarsen_grid, readROMSfile
 
 figdir = '/home/alsjur/nird/figures_temp/transects/A4/'
 datadir = '/home/alsjur/nird/data_temp/'
@@ -22,8 +24,13 @@ fontsize = 12
 
 depth = 'mean'
 
+coarsen = True
+coarsen_factor = 3
+
 A4grid = readROMSfile('/home/alsjur/PhD/Data/test_data/A4/'+'ocean_avg_1827.nc')
+A4gridc = coarsen_grid(A4grid, coarsen_factor)
 LLCgrid = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/'+'LLC2160_grid.nc')
+
 
 istart = int(sys.argv[1])
 istop = int(sys.argv[2])
@@ -68,6 +75,12 @@ file = datadir+f'A4_depth{depth}_transect{nr}.pickle'
 with open(file, 'rb') as f:
     data = pickle.load(f)
 
+if coarsen:
+    filec = datadir+f'A4_depth{depth}_transect{nr}_coarse{coarsen_factor}.pickle'
+
+    with open(filec, 'rb') as f:
+        datac = pickle.load(f) 
+
 
 ii, jj = find_indexes(istart, istop, jstart, jstop)
 
@@ -76,8 +89,8 @@ lats = []
 bathc = []
 
 for i, j in zip(ii, jj):
-    lons.append(bath.lon_rho.sel(i=i,j=j))
-    lats.append(bath.lat_rho.sel(i=i,j=j))
+    lons.append(bath.XC.sel(i=i,j=j))
+    lats.append(bath.YC.sel(i=i,j=j))
     bathc.append(bath.sel(i=i,j=j))
 
 
@@ -107,14 +120,14 @@ vmin = 0
 vmax = bath.max()
 
 # plot map
-cm = axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho>0)
+cm = axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC>0)
             ,transform=ccrs.PlateCarree()
             ,cmap='Blues'
             ,vmin=vmin
             ,vmax=vmax
             #,zorder=5
             )
-axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho<0)
+axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC<0)
           ,transform=ccrs.PlateCarree()
           ,cmap='Blues'
           ,vmin=vmin
@@ -154,13 +167,13 @@ dpi = data['dpi']
 scales = data['scales']
 
 # plot regional mean 
-pimax = float(np.abs(pi).max().values)*0.75
+pimax = 0.5e-9#float(np.abs(pi).max().values)*0.75
 #pimax = 5e-9
 
 cb = axd['pi'].pcolormesh(pi.x, scales*1e3, pi.values.transpose(), 
                       vmin = -pimax,
                       vmax = pimax,
-                      cmap = 'coolwarm',
+                      cmap = cmocean.cm.curl,#'coolwarm',
                       shading='auto'
                       )
 

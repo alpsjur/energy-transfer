@@ -120,15 +120,16 @@ def coarsen_depth(depth, coarsen_factor):
 
 def get_grid_vars(dsGrid, maskvar, ROMS=False, depth=0):
     mask_data = np.ones((len(dsGrid.j),len(dsGrid.i)))
-    if ROMS:
-        # remove where it is too shallow
-        mask_data[maskvar<depth] = 0
+    ## Comment out this to ignore land boundaries, then velocities must be set to zreo over land
+    # if ROMS:
+    #     # remove where it is too shallow
+    #     mask_data[maskvar<depth] = 0
         
-        # remove land
-        landmask = dsGrid.mask_rho.values
-        mask_data[landmask==0] = 0
-    else:
-        mask_data[maskvar > 1e10] = 0
+    #     # remove land
+    #     landmask = dsGrid.mask_rho.values
+    #     mask_data[landmask==0] = 0
+    # else:
+    #     mask_data[maskvar > 1e10] = 0
     wet_mask = xr.DataArray(mask_data, dims=['j', 'i'])
     # grid info centered at T-points
     wet_mask_t = wet_mask

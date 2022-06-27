@@ -11,32 +11,35 @@ import cartopy.crs as ccrs
 from matplotlib import patches as mpatches
 import sys
 sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
-from LLC2A4 import readROMSfile, LLC2A4
+from gcmFilterFunction import coarsen_grid, readROMSfile
 
 fontsize = 12
+coarsen_factor = 1
 
 outdir = '/home/alsjur/nird/energy-transfer/data/'
 figdir = '/home/alsjur/nird/figures_temp/'
 
-gridData = readROMSfile('/home/alsjur/PhD/Data/test_data/A4/'+'ocean_avg_1827.nc')
-bath = gridData.h
+dsGrid = readROMSfile('/home/alsjur/PhD/Data/test_data/A4/'+'ocean_avg_1827.nc')
+#dsGridc = coarsen_grid(dsGrid, coarsen_factor)
+#bath = dsGridc.h
+
+bath = dsGrid.h
 
 #%%
-step = 100
-size = 50
+step = 30
+size = 20
 
 count = 1
 regions_auto = {}
-for i in range(100, 1601-size, step):
-    for j in range(0, 1201-size, step):
+for i in range(60, 534-size, step):
+    for j in range(0, 400-size, step):
         bathc = bath.sel(i=slice(i,i+size),j=slice(j,j+size))
-        print(bathc)
         if 20 in bathc.values:
             continue
         if bathc.mean(dim=('i', 'j')) < 100:
             continue
-        if i > 350 and i < 850 and j > 700:
-            continue
+        # if i > 350 and i < 850 and j > 700:
+        #     continue
         regions_auto[f'region{count}'] = {
             'idx_start' : i,
             'idx_stop' : i+size,
@@ -45,7 +48,32 @@ for i in range(100, 1601-size, step):
             'nr' : count
             }
         count += 1
-
+        
+#%% 
+regions_auto = {
+    'canada_baisin' : {
+        'idx_start' : 1100,
+        'idx_stop' : 1200,
+        'idy_start' : 800,
+        'idy_stop' : 900,
+        'nr' : 1
+        },
+    'norwegian_baisin' : {
+        'idx_start' : 100,
+        'idx_stop' : 200,
+        'idy_start' : 550,
+        'idy_stop' : 650,
+        'nr' : 2
+        },
+    'slope' : {
+        'idx_start' : 1300,
+        'idx_stop' : 1400,
+        'idy_start' : 450,
+        'idy_stop' : 550,
+        'nr' : 3
+        }
+    }
+#%%
 print(count)
 # projection used for plotting
 projection = ccrs.NearsidePerspective(central_longitude=-30
@@ -53,7 +81,7 @@ projection = ccrs.NearsidePerspective(central_longitude=-30
                                       #, satellite_height = 5E6
                                       )
 
-fig = plt.figure(figsize=(15,7))
+fig = plt.figure(figsize=(15*2,7*2))
 gs = fig.add_gridspec(1,2)
 
 axd = {}
@@ -65,14 +93,14 @@ vmin = 0
 vmax = bath.max()
 
 # plot map
-cm = axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho>0)
+cm = axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC>0)
            ,transform=ccrs.PlateCarree()
            ,cmap='Blues'
            ,vmin=vmin
            ,vmax=vmax
            #,zorder=5
            )
-axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho<0)
+axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC<0)
           ,transform=ccrs.PlateCarree()
           ,cmap='Blues'
           ,vmin=vmin
@@ -117,17 +145,17 @@ def plot_region(bath, axd, idx_start, idx_stop, idy_start, idy_stop, nr):
                       )
     
 
-    lon0 = float(bath.lon_rho.isel(i=idx_start,j=idy_start).values)
-    lat0 = float(bath.lat_rho.isel(i=idx_start,j=idy_start).values)
+    lon0 = float(bath.XC.isel(i=idx_start,j=idy_start).values)
+    lat0 = float(bath.YC.isel(i=idx_start,j=idy_start).values)
     
-    lon1 = float(bath.lon_rho.isel(i=idx_stop,j=idy_start).values)
-    lat1 = float(bath.lat_rho.isel(i=idx_stop,j=idy_start).values)
+    lon1 = float(bath.XC.isel(i=idx_stop,j=idy_start).values)
+    lat1 = float(bath.YC.isel(i=idx_stop,j=idy_start).values)
     
-    lon2 = float(bath.lon_rho.isel(i=idx_stop,j=idy_stop).values)
-    lat2 = float(bath.lat_rho.isel(i=idx_stop,j=idy_stop).values)
+    lon2 = float(bath.XC.isel(i=idx_stop,j=idy_stop).values)
+    lat2 = float(bath.YC.isel(i=idx_stop,j=idy_stop).values)
     
-    lon3 = float(bath.lon_rho.isel(i=idx_start,j=idy_stop).values)
-    lat3 = float(bath.lat_rho.isel(i=idx_start,j=idy_stop).values)
+    lon3 = float(bath.XC.isel(i=idx_start,j=idy_stop).values)
+    lat3 = float(bath.YC.isel(i=idx_start,j=idy_stop).values)
     
     #fix strange behavior when crossing from lon -180 to lon 180
     if lon0*lon2 < 0 and lon2 < -90:
@@ -171,9 +199,9 @@ fig.savefig(figdir+'A4regions.png')
 plt.show()
 
 # sace dictionary with regions
-
+#%%
 # open file for writing
-f = open(outdir+'A4regions.txt','w')
+f = open(outdir+f'A4regions_c{coarsen_factor}.txt','w')
 
 # write file
 f.write( str(regions_auto) )

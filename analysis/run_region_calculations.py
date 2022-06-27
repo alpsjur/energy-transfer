@@ -10,7 +10,7 @@ import json
 
 # read transect defininitions from file
 #with open('../data/LLCregions.txt') as f:
-with open('../data/A4regions.txt') as f:    
+with open('../data/A4regions_c3.txt') as f:    
     data = f.read()
     regions = json.loads(data)
 
@@ -24,4 +24,5 @@ for region, data in regions.items():
     
     print('Starting',region)
     #os.system(f'python LLC_mean_pi_regions.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')
-    os.system(f'python A4_mean_pi_regions.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')
+    #os.system(f'python A4_mean_pi_regions.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')
+    os.system(f'python A4_mean_pi_regions_coarse.py {idx_start} {idx_stop} {idy_start} {idy_stop} {nr}')

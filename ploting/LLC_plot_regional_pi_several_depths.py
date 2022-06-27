@@ -21,13 +21,13 @@ from LLC2A4 import readROMSfile, LLC2A4
 sns.set_theme()
 
 datadir = '/home/alsjur/nird/data_temp/'
-figdir = '/home/alsjur/nird/figures_temp/regions/A4/'
+figdir = '/home/alsjur/nird/figures_temp/regions/LLC/'
 
-depths = [100, 50, 5]
+levels = [16, 21, 28, 34, 39]
+depths = [53, 100, 209, 352, 507]
 #scales = 1/np.geomspace(2100,150000,num=20,dtype=int)
 
-gridData = readROMSfile('/home/alsjur/PhD/Data/test_data/A4/'+'ocean_avg_1827.nc')
-LLCgrid = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/'+'LLC2160_grid.nc')
+gridData = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/'+'LLC2160_grid.nc')
 
 istart = int(sys.argv[1])
 istop = int(sys.argv[2])
@@ -35,12 +35,12 @@ jstart = int(sys.argv[3])
 jstop = int(sys.argv[4])
 region = int(sys.argv[5])
 
-istart, jstart = LLC2A4([istart, jstart], gridData, LLCgrid)
-istop, jstop = LLC2A4([istop, jstop], gridData, LLCgrid)
+#istart, jstart = LLC2A4([istart, jstart], gridData, LLCgrid)
+#istop, jstop = LLC2A4([istop, jstop], gridData, LLCgrid)
 
-bath = gridData.h
+bath = gridData.Depth
 
-file = datadir+f'A4_region{region}.pickle'
+file = datadir+f'LLC_region{region}.pickle'
 
 with open(file, 'rb') as f:
     data = pickle.load(f)
@@ -72,14 +72,15 @@ vmin = 0
 vmax = bath.max()
 
 # plot map
-cm = axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho>0)
+# plot map
+cm = axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC>0)
            ,transform=ccrs.PlateCarree()
            ,cmap='Blues'
            ,vmin=vmin
            ,vmax=vmax
            #,zorder=5
            )
-axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho<0)
+axd['map'].contourf(bath.XC, bath.YC, bath.where(bath.XC<0)
           ,transform=ccrs.PlateCarree()
           ,cmap='Blues'
           ,vmin=vmin
@@ -88,28 +89,28 @@ axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho<0)
           )
 
 # mark region on map 
-lon0 = bath.lon_rho.sel(i=istart,j=jstart)
-lat0 = bath.lat_rho.sel(i=istart,j=jstart)
+lon0 = bath.XC.sel(i=istart,j=jstart)
+lat0 = bath.YC.sel(i=istart,j=jstart)
 
-lon1 = bath.lon_rho.sel(i=istop,j=jstart)
-lat1 = bath.lat_rho.sel(i=istop,j=jstart)
+lon1 = bath.XC.sel(i=istop,j=jstart)
+lat1 = bath.YC.sel(i=istop,j=jstart)
 
-lon2 = bath.lon_rho.sel(i=istop,j=jstop)
-lat2 = bath.lat_rho.sel(i=istop,j=jstop)
+lon2 = bath.XC.sel(i=istop,j=jstop)
+lat2 = bath.YC.sel(i=istop,j=jstop)
 
-lon3 = bath.lon_rho.sel(i=istart,j=jstop)
-lat3 = bath.lat_rho.sel(i=istart,j=jstop)
+lon3 = bath.XC.sel(i=istart,j=jstop)
+lat3 = bath.YC.sel(i=istart,j=jstop)
 
-#fix strange behavior when crossing from lon -180 to lon 180
-# if lon0*lon2 < 0 and lon2 < -90:
-#     if lon0 < 0:
-#         lon0 += 360
-#     if lon1 < 0:
-#         lon1 += 360
-#     if lon2 < 0:
-#         lon2 += 360
-#     if lon3 < 0:
-#         lon3 += 360
+    #fix strange behavior when crossing from lon -180 to lon 180
+if lon0*lon2 < 0 and lon2 < -90:
+    if lon0 < 0:
+        lon0 += 360
+    if lon1 < 0:
+        lon1 += 360
+    if lon2 < 0:
+        lon2 += 360
+    if lon3 < 0:
+        lon3 += 360
 
 lons = [lon0, lon1, lon2, lon3, lon0]
 lats = [lat0, lat1, lat2, lat3, lat0]
@@ -132,8 +133,8 @@ axd['map'].spines['geo'].set_visible(False)
 
 
 colors = sns.color_palette("Set2", len(depths))
-for depth, color in zip(depths, colors):
-    d = data[f'depth{depth}']
+for level, color, depth in zip(levels, colors, depths):
+    d = data[f'level{level}']
     scales = d['scales']
     pi = d['pi']
     dpi = d['dpi']
@@ -159,4 +160,4 @@ axd['e'].set_xscale('log')
 
 axd['pi'].legend()
 
-fig.savefig(figdir+f'A4_pi_depth_region{region}.png')
+fig.savefig(figdir+f'LLC_pi_depth_region{region}.png')

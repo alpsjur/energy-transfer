@@ -22,7 +22,7 @@ filepath = '/tos-project3/NS9081K/NORSTORE_OSL_DISK/NS9081K/shared/A4/A4_nudging
 outpath = '/projects/NS9869K/LLC2160/A4_filtered/'
 #outpath = '/home/alsjur/PhD/Kode/test_data/'
 
-scales = np.geomspace(7000, 500000, num=30, dtype=int)[18:]
+scales = np.geomspace(7000, 500000, num=30, dtype=int)[17:]
 #all_days = np.arange(1,4452,10)
 all_days = np.arange(1827,4452,10)
 depth = 'mean'
@@ -36,6 +36,8 @@ tot_screens = 2
 screen = 0#int(sys.argv[1])
 
 days = np.array_split(all_days,tot_screens)[screen]
+#days = np.arange(981,2231,10)
+#days = np.arange(3251,4452,10)
 
 ### Grid information ###
 coords={'X':{'center':'i', 'left':'i_g'}, 
@@ -58,11 +60,11 @@ for scale in scales:
     elif scale <= 30000:
         iterations.append(5)
     elif scale <= 100000:
-        iterations.append(10)
+        iterations.append(20)
     elif scale <= 200000:
-        iterations.append(25)
+        iterations.append(30)
     else:
-        iterations.append(40)
+        iterations.append(60)
 
 
 #%%
@@ -82,8 +84,8 @@ def calculate_filtered(day):
     z_rho = sdepth(H, Hc, C)
     landmask = ds_temp.mask_rho.values
     
-    # u = zslice(ds_temp.u, z_rho, -depth)
-    # v = zslice(ds_temp.v, z_rho, -depth)
+    # u = zslice(ds_temp.u, z_rho, -depth, Vtransform=2)
+    # v = zslice(ds_temp.v, z_rho, -depth, Vtransform=2)
     
     # u[H<depth] = 0
     # v[H<depth] = 0
@@ -159,7 +161,7 @@ def calculate_filtered(day):
     #                  )
 
      
-    grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGridc, dsdc.values, depth=depth, ROMS=True)
+    grid_vars_visc, grid_vars_diff, dx_min = get_grid_vars(dsGridc, dsdc.values, depth=0, ROMS=True)
     
     
     bars = []
@@ -175,8 +177,8 @@ def calculate_filtered(day):
 
         
     ds_out = xr.concat(bars, dim='scale').drop_vars(['pn','pm'])
-    ds_out['lon'] = grid.interp(dsc.lon_u, axis=['X'], boundary='extend')
-    ds_out['lat'] = grid.interp(dsc.lat_u, axis=['X'], boundary='extend')
+    ds_out['lon'] = grid.interp(dsGridc.lon_u, axis=['X'], boundary='extend')
+    ds_out['lat'] = grid.interp(dsGridc.lat_u, axis=['X'], boundary='extend')
     ds_out.coords['scale'] = scales
     toc = time.perf_counter()
     runtime = (toc-tic)/60
@@ -186,7 +188,8 @@ def calculate_filtered(day):
         
         # ax.plot(ds_out.scale,ds_out.energy_transfer.mean(dim=('i','j')))
         # ax.set_ylim(-2e-10,2e-10)
-    return None
-    #return ds_out
+    #return None
+    return ds_out
 
-out = Parallel(n_jobs=6)(delayed(calculate_filtered)(day) for day in days)
+#ds = calculate_filtered(1827)
+out = Parallel(n_jobs=4)(delayed(calculate_filtered)(day) for day in days)

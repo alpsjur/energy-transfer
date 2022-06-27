@@ -103,7 +103,7 @@ for level in levels:
         'pi' : pi,
         'e' : e,
         'dpi' : dpi,
-        'dd' : de,
+        'de' : de,
         'scales' : scales,
         'region' : region
         }

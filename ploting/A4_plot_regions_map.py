@@ -52,9 +52,9 @@ bath = A4grid.h
 
 
 # projection used for plotting
-projection = ccrs.NearsidePerspective(central_longitude=7
-                                      , central_latitude=88.0
-                                      , satellite_height = 5E6
+projection = ccrs.NearsidePerspective(central_longitude=-30
+                                      , central_latitude=70.0
+                                      #, satellite_height = 5E6
                                       )
 
 fig = plt.figure(constrained_layout=True, figsize=(15,10))
@@ -88,7 +88,7 @@ axd['map'].contourf(bath.lon_rho, bath.lat_rho, bath.where(bath.lon_rho<0)
 #ax.gridlines(color='gray', linestyle='--')
 axd['map'].coastlines()
 #axd['map'].gridlines()
-axd['map'].set_extent([-180, 180, 70, 90], crs=ccrs.PlateCarree())
+axd['map'].set_extent([-180, 180, 50, 90], crs=ccrs.PlateCarree())
 
 # remove spines
 #ax.outline_patch.set_visible(False)

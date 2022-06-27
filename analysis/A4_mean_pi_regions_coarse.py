@@ -11,7 +11,7 @@ import numpy as np
 import pickle
 import sys
 import glob
-from LLC2A4 import readROMSfile, coarse2fine
+from gcmFilterFunction import readROMSfile, coarsen_grid
 
 datadir = '/projects/NS9869K/LLC2160/A4_filtered/'
 outdir = '/nird/home/annals/data_temp/'
@@ -21,6 +21,7 @@ depths = ['mean']
 coarsen_factor = 3
 
 gridData = readROMSfile('/tos-project3/NS9081K/NORSTORE_OSL_DISK/NS9081K/shared/A4/A4_nudging_off/outputs/'+'ocean_avg_1827.nc')
+gridData = coarsen_grid(gridData, coarsen_factor)
 # LLCgrid = xr.open_dataset('/projects/NS9869K/LLC260/LLC2160_grid.nc')
 
 istart = int(sys.argv[1])
@@ -29,20 +30,19 @@ jstart = int(sys.argv[3])
 jstop = int(sys.argv[4])
 region = int(sys.argv[5])
 
-istart, jstart, istop, jstop = coarse2fine(np.array([istart, jstart, istop, jstop]), coarsen_factor)
-
 
 def spectrum_at_depth(depth, grid):
     dss = []
     #files = sorted(glob.glob(datadir+f'A4_filtered_day*_depth{depth:03n}.nc'))
-    files = sorted(glob.glob(datadir+'A4_filtered_day*_depthmean.nc'))
+    files = sorted(glob.glob(datadir+f'A4_filtered_day*_depthmean_coarse{coarsen_factor}.nc'))
     for file in files:
        ds = xr.open_dataset(file)#.isel(i=slice(istart,istop),j=slice(jstart,jstop),
                                  #   i_g=slice(istart,istop),j_g=slice(jstart,jstop)
-                                 #                 )                
-       ds = ds.isel(i=slice(istart,istop,coarsen_factor),j=slice(jstart,jstop,coarsen_factor),
-                i_g=slice(istart,istop,coarsen_factor),j_g=slice(jstart,jstop,coarsen_factor)
-                )                         
+                                 #                 )
+                        
+       ds = ds.isel(i=slice(istart,istop),j=slice(jstart,jstop),
+                i_g=slice(istart,istop),j_g=slice(jstart,jstop)
+                )                           
        dss.append(ds)
        
     data = xr.concat(dss, dim='time')
@@ -101,6 +101,6 @@ for depth in depths:
         }
 
 #with open(outdir+f'A4_region{region}.pickle', 'wb') as f:
-with open(outdir+f'A4_depthmean_region{region}.pickle', 'wb') as f:
+with open(outdir+f'A4_depthmean_coarse{coarsen_factor}_region{region}.pickle', 'wb') as f:
     # Pickle the 'data' dictionary using the highest protocol available.
     pickle.dump(datadict, f, pickle.HIGHEST_PROTOCOL)

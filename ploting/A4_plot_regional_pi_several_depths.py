@@ -16,15 +16,18 @@ from matplotlib import patches as mpatches
 import pickle
 import sys
 sys.path.insert(0, '/home/alsjur/nird/energy-transfer/analysis')
-from LLC2A4 import readROMSfile, LLC2A4
+from LLC2A4 import readROMSfile, LLC2A4, coarse2fine
 
 sns.set_theme()
 
 datadir = '/home/alsjur/nird/data_temp/'
 figdir = '/home/alsjur/nird/figures_temp/regions/A4/'
 
-depths = [100, 50, 5]
+depths = ['mean']
 #scales = 1/np.geomspace(2100,150000,num=20,dtype=int)
+
+coarsen = True
+coarsen_factor = 3
 
 gridData = readROMSfile('/home/alsjur/PhD/Data/test_data/A4/'+'ocean_avg_1827.nc')
 LLCgrid = xr.open_dataset('/home/alsjur/PhD/Data/test_data/LLC2160/'+'LLC2160_grid.nc')
@@ -35,20 +38,26 @@ jstart = int(sys.argv[3])
 jstop = int(sys.argv[4])
 region = int(sys.argv[5])
 
-istart, jstart = LLC2A4([istart, jstart], gridData, LLCgrid)
-istop, jstop = LLC2A4([istop, jstop], gridData, LLCgrid)
+istart, jstart, istop, jstop = coarse2fine(np.array([istart, jstart, istop, jstop]), coarsen_factor)
 
 bath = gridData.h
 
-file = datadir+f'A4_region{region}.pickle'
+#file = datadir+f'A4_region{region}.pickle'
+file = datadir+f'A4_depthmean_region{region}.pickle'
 
 with open(file, 'rb') as f:
     data = pickle.load(f)
+    
+if coarsen:
+    filec = datadir+f'A4_depthmean_coarse{coarsen_factor}_region{region}.pickle'
+
+    with open(filec, 'rb') as f:
+        datac = pickle.load(f)    
 
 # projection used for plotting
-projection = ccrs.NearsidePerspective(central_longitude=7
-                                      , central_latitude=88.0
-                                      , satellite_height = 5E6
+projection = ccrs.NearsidePerspective(central_longitude=-30
+                                      , central_latitude=70.0
+                                      #, satellite_height = 5E6
                                       )
 
 fig = plt.figure(constrained_layout=True, figsize=(15,10))
@@ -65,7 +74,7 @@ axd = {
 
 #axd['map'].remove()
 with sns.axes_style("white"):
-    axd['map'] = fig.add_subplot(gs[0,0],projection=projection)
+    axd['map'] = fig.add_subplot(gs[:,0],projection=projection)
 
 
 vmin = 0
@@ -124,7 +133,7 @@ axd['map'].plot(lons, lats
 #ax.gridlines(color='gray', linestyle='--')
 axd['map'].coastlines()
 #axd['map'].gridlines()
-axd['map'].set_extent([-180, 180, 70, 90], crs=ccrs.PlateCarree())
+axd['map'].set_extent([-180, 180, 50, 90], crs=ccrs.PlateCarree())
 
 # remove spines
 #ax.outline_patch.set_visible(False)
@@ -134,20 +143,51 @@ axd['map'].spines['geo'].set_visible(False)
 colors = sns.color_palette("Set2", len(depths))
 for depth, color in zip(depths, colors):
     d = data[f'depth{depth}']
+
     scales = d['scales']
+    smax = np.max(scales)
     pi = d['pi']
     dpi = d['dpi']
     
     e = d['e']
-    de = d['dd']
+    de = d['de']
     
-    axd['pi'].plot(scales*1e3, pi, label=f'Depth {depth}', color=color)
-    #axd['pi'].fill_between(scales*1e3, pi+dpi, pi-dpi, alpha=0.2, color=color)
+    axd['pi'].plot(scales*1e3, pi, label='Fine', color=color)
+    axd['pi'].fill_between(scales*1e3, pi+dpi, pi-dpi, alpha=0.2, color=color)
     
     axd['e'].plot(scales*1e3, e, color=color)
-    #axd['e'].fill_between(scales*1e3, e+de, e-de, alpha=0.2, color=color)
+    axd['e'].fill_between(scales*1e3, e+de, e-de, alpha=0.2, color=color)
     
-axd['pi'].plot(scales*1e3,np.zeros(scales.shape), ls='--', color='Gray')
+    if coarsen:
+        d = datac[f'depth{depth}']
+
+        scales = d['scales']
+        smin = np.min(scales)
+        pi = d['pi']
+        dpi = d['dpi']
+        
+        e = d['e']
+        de = d['de']
+        
+        axd['pi'].plot(scales*1e3, pi, label='Coarse'
+                       #, color=color
+                       , color = 'red'
+                       )
+        axd['pi'].fill_between(scales*1e3, pi+dpi, pi-dpi, alpha=0.2
+                                #, color=color
+                                ,color='red'
+                                )
+        
+        axd['e'].plot(scales*1e3, e
+                      #, color=color
+                      , color = 'red'
+                      )
+        axd['e'].fill_between(scales*1e3, e+de, e-de, alpha=0.2
+                              #, color=color
+                              ,color='red'
+                              )
+    
+axd['pi'].plot((smax*1e3,smin*1e3),(0,0), ls='--', color='Gray')
 axd['pi'].set_ylabel('Cross-scale energy transfer')
 
 
@@ -159,4 +199,5 @@ axd['e'].set_xscale('log')
 
 axd['pi'].legend()
 
-fig.savefig(figdir+f'A4_pi_depth_region{region}.png')
+fig.savefig(figdir+f'A4_pi_depthmean_region{region}_spread.png')
+#fig.savefig(figdir+f'A4_pi_depthmean_region{region}.png')

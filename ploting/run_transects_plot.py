@@ -20,6 +20,8 @@ for transect, data in transects.items():
     jstop = data['jstop']
     nr = data['nr']
     
-    print('Starting',transect)
-    #os.system(f'python LLC_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')
-    os.system(f'python A4_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')
+    if nr > 9:
+    
+        print('Starting',transect)
+        #os.system(f'python LLC_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')
+        os.system(f'python A4_plot_transect_pi.py {istart} {istop} {jstart} {jstop} {nr}')
